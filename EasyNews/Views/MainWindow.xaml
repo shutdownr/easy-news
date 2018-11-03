@@ -1,0 +1,69 @@
+﻿<Window
+    x:Class="EasyNews.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="clr-namespace:EasyNews.Views"
+    xmlns:wpf="clr-namespace:Microsoft.Toolkit.Win32.UI.Controls.WPF;assembly=Microsoft.Toolkit.Win32.UI.Controls"
+    Title="EasyNews"
+    Width="800"
+    Height="450"
+    Background="{DynamicResource MaterialDesignPaper}"
+    FontFamily="{DynamicResource MaterialDesignFont}"
+    TextElement.FontSize="13"
+    TextElement.FontWeight="Regular"
+    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextOptions.TextFormattingMode="Ideal"
+    TextOptions.TextRenderingMode="Auto"
+    WindowStartupLocation="CenterScreen"
+    WindowState="Maximized"
+    mc:Ignorable="d">
+    <DockPanel>
+
+        <Menu Background="{DynamicResource PrimaryHueDarkBrush}" DockPanel.Dock="Top">
+
+            <MenuItem Foreground="White" Header="RSS">
+                <MenuItem.Icon>
+                    <materialDesign:PackIcon Foreground="White" Kind="Rss" />
+                </MenuItem.Icon>
+                <MenuItem
+                    Click="OnAddFeedClicked"
+                    Foreground="White"
+                    Header="Add Feed" />
+                <MenuItem
+                    Click="OnRemoveFeedClicked"
+                    Foreground="White"
+                    Header="Remove Feed" />
+
+            </MenuItem>
+        </Menu>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            <views:RssScroller x:Name="RssScroller" Grid.Column="0" />
+            <Grid
+                Name="WebViewGrid"
+                Grid.Column="1"
+                Margin="10,0,0,0"
+                Visibility="Collapsed">
+                <wpf:WebView
+                    Name="WebView"
+                    Grid.Column="0"
+                    Loaded="OnWebViewLoaded"
+                    Source="{Binding Path=Link}" />
+            </Grid>
+
+            <views:RssEditGrid
+                x:Name="RssEditGrid"
+                Grid.Column="1"
+                Margin="10,0,0,0"
+                Visibility="Visible" />
+
+        </Grid>
+    </DockPanel>
+</Window>
