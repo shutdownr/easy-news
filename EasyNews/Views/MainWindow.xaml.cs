@@ -1,12 +1,8 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
-using System.Windows.Forms;
-using System.Windows.Media.Animation;
-using EasyNews.Helpers;
 using EasyNews.ViewModels;
-using Button = System.Windows.Controls.Button;
+
 
 
 namespace EasyNews.Views
@@ -20,65 +16,88 @@ namespace EasyNews.Views
         ///
         /// <remarks>   Tim, 15.10.2018. </remarks>
 
-        private FeedViewModel feedViewModel;
+        private FeedViewModel feedViewModel = new FeedViewModel();
 
-        private RSSFeedViewModel rssFeedViewModel;
-        private ArticleViewModel articleViewModel;
-
-        private DoubleAnimation expandAnimation;
-        private DoubleAnimation collapseAnimation;
-        private Storyboard expandArticleListStoryboard;
-        private Storyboard collapseArticleListStoryboard;
+        private RssFeedViewModel rssFeedViewModel = new RssFeedViewModel();
+        private ArticleViewModel articleViewModel = new ArticleViewModel();
+        private FavoritesViewModel favoritesViewModel = new FavoritesViewModel();
 
         public MainWindow()
         {
             InitializeComponent();
-            feedViewModel = new FeedViewModel();
-            rssFeedViewModel = new RSSFeedViewModel();
-            articleViewModel = new ArticleViewModel();
 
-            RssScroller.InitAnimations(CollapseAnimation_Started, CollapseAnimation_Completed);
+        }
+
+        public void OnWindowLoaded(object sender, RoutedEventArgs args)
+        {
+            HomeView.ArticleSelected = ArticleSelected;
+            HomeView.ArticleViewModel = articleViewModel;
+            HomeView.FavoritesViewModel = favoritesViewModel;
+
+            RssScroller.InitAnimations(CollapseAnimation_Completed, CollapseAnimation_Started);
             RssScroller.ArticleSelected = ArticleSelected;
+            RssScroller.FeedViewModel = feedViewModel;
+            RssScroller.RssFeedViewModel = rssFeedViewModel;
+            RssScroller.ArticleViewModel = articleViewModel;
+
+            ArticleWebView.ArticleViewModel = articleViewModel;
+
+            RssEditGrid.RssScroller = RssScroller;
+            RssEditGrid.RssFeedViewModel = rssFeedViewModel;
+            RssEditGrid.FeedViewModel = feedViewModel;
         }
 
         private void CollapseAnimation_Completed(object sender, EventArgs e)
         {
-            WebView.MaxWidth = Double.PositiveInfinity;
-            WebViewGrid.MaxWidth = Double.PositiveInfinity;
+            Trace.WriteLine("Unfixing Width...");
+            ArticleWebView.UnfixWidth();
         }
 
         private void CollapseAnimation_Started(object sender, EventArgs e)
         {
-            WebView.MaxWidth = WebView.ActualWidth;
-            WebViewGrid.MaxWidth = WebView.ActualWidth;
+            Trace.WriteLine("Fixing Width...");
+            ArticleWebView.FixWidth();
         }
 
         private void ArticleSelected(string link)
         {
-            WebView.Navigate(new Uri(link));
-            WebViewGrid.Visibility = Visibility.Visible;
+            ArticleWebView.Navigate(new Uri(link));
+            ArticleWebView.Visibility = Visibility.Visible;
             RssEditGrid.Visibility = Visibility.Collapsed;
+            RssScroller.Visibility = Visibility.Visible;
+            HomeView.Visibility = Visibility.Collapsed;
         }
 
-        private void OnWebViewLoaded(object sender, RoutedEventArgs args)
+        private void OnHomeClicked(object sender, RoutedEventArgs args)
         {
-            WebView.DataContext = articleViewModel;
+            RssEditGrid.SetMode(RssEditMode.Add);
+            ArticleWebView.Visibility = Visibility.Collapsed;
+            RssEditGrid.Visibility = Visibility.Collapsed;
+            RssScroller.Visibility = Visibility.Collapsed;
+            HomeView.Visibility = Visibility.Visible;
         }
-
 
         private void OnAddFeedClicked(object sender, RoutedEventArgs args)
         {
-            WebViewGrid.Visibility = Visibility.Collapsed;
+            RssEditGrid.SetMode(RssEditMode.Add);
+            ArticleWebView.Visibility = Visibility.Collapsed;
             RssEditGrid.Visibility = Visibility.Visible;
-
-            Trace.WriteLine("Feed added");
+            RssScroller.Visibility = Visibility.Visible;
+            HomeView.Visibility = Visibility.Collapsed;
         }
 
         private void OnRemoveFeedClicked(object sender, RoutedEventArgs args)
         {
-            Trace.WriteLine("Feed removed");
-            WebViewGrid.Visibility = Visibility.Collapsed;
+            RssEditGrid.SetMode(RssEditMode.Remove);
+            ArticleWebView.Visibility = Visibility.Collapsed;
             RssEditGrid.Visibility = Visibility.Visible;
+            RssScroller.Visibility = Visibility.Visible;
+            HomeView.Visibility = Visibility.Collapsed;
+        }
+
+        private void HomeView_Loaded()
+        {
+
         }
     }
 

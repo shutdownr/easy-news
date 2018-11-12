@@ -3,8 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
     d:DesignWidth="800"
     FontFamily="{DynamicResource MaterialDesignFont}"
@@ -14,57 +14,63 @@
     TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="Auto"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
+    </UserControl.Resources>
     <Grid
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        Background="{DynamicResource MaterialDesignPaper}" >
+        Background="{DynamicResource MaterialDesignPaper}">
         <ScrollViewer
-                Grid.Column="0"
-                Background="{DynamicResource MaterialDesignLightBackground}"
-                HorizontalScrollBarVisibility="Auto"
-                MouseEnter="OnArticleListHover"
-                MouseLeave="OnArticleListHoverOut"
-                VerticalScrollBarVisibility="Hidden">
+            Name="ScrollViewer"
+            Grid.Column="0"
+            Background="{DynamicResource MaterialDesignLightBackground}"
+            HorizontalScrollBarVisibility="Auto"
+            MouseEnter="OnArticleListHover"
+            MouseLeave="OnArticleListHoverOut"
+            VerticalScrollBarVisibility="Hidden"
+            Visibility="{Binding Path=IsVisible, Converter={StaticResource VisibilityConverter}}">
+
             <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
+
                 <ItemsControl
-                        Name="ArticleList"
-                        Width="200"
-                        ItemsSource="{Binding Path=Articles}"
-                        Loaded="OnArticleListLoaded">
+                    Name="ArticleList"
+                    Width="200"
+                    ItemsSource="{Binding Path=Articles}"
+                    Loaded="OnArticleListLoaded">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <materialDesign:Card
-                                    Margin="14"
-                                    Padding="32"
+                                Margin="14"
+                                Padding="32"
+                                PreviewMouseDown="OnArticleSelected"
+                                Tag="{Binding Path=FeedItem.Link}">
+                                <StackPanel
+                                    Height="70"
+                                    Orientation="Horizontal"
                                     PreviewMouseDown="OnArticleSelected"
                                     Tag="{Binding Path=FeedItem.Link}">
-                                <StackPanel
-                                        Height="70"
-                                        Orientation="Horizontal"
-                                        PreviewMouseDown="OnArticleSelected"
-                                        Tag="{Binding Path=FeedItem.Link}">
                                     <Image Width="100" Source="{Binding Path=ImageLink}" />
                                     <Grid Height="70">
                                         <TextBlock
-                                                Width="200"
-                                                Margin="10,5,0,5"
-                                                HorizontalAlignment="Left"
-                                                VerticalAlignment="Top"
-                                                FontSize="15"
-                                                FontWeight="Bold"
-                                                PreviewMouseDown="OnArticleSelected"
-                                                Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                                                Tag="{Binding Path=FeedItem.Link}"
-                                                Text="{Binding Path=FeedItem.Title, Mode=OneWay}"
-                                                TextTrimming="WordEllipsis"
-                                                TextWrapping="Wrap" />
+                                            Width="200"
+                                            Margin="10,5,0,5"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            FontSize="15"
+                                            FontWeight="Bold"
+                                            PreviewMouseDown="OnArticleSelected"
+                                            Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                                            Tag="{Binding Path=FeedItem.Link}"
+                                            Text="{Binding Path=FeedItem.Title, Mode=OneWay}"
+                                            TextTrimming="WordEllipsis"
+                                            TextWrapping="Wrap" />
                                     </Grid>
                                 </StackPanel>
                             </materialDesign:Card>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -1,16 +1,27 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using EasyNews.Helpers;
 using EasyNews.Models;
 
 namespace EasyNews.ViewModels
 {
-    internal class FeedViewModel
+    public class FeedViewModel : INotifyPropertyChanged
     {
-        public ObservableCollection<Feed> Feeds { get; set; }
+        private ObservableCollection<Feed> _feeds;
+
+        public ObservableCollection<Feed> Feeds
+        {
+            get { return _feeds; }
+            set
+            {
+                _feeds = value;
+                OnPropertyChanged();
+            }
+        }
 
         private static readonly string[] DefaultFeeds =
         {
@@ -32,8 +43,8 @@ namespace EasyNews.ViewModels
             }
             catch (FileNotFoundException)
             {
-                File.WriteAllLines(@".\Feeds.txt",FeedViewModel.DefaultFeeds);
-                lines = FeedViewModel.DefaultFeeds;
+                File.WriteAllLines(@".\Feeds.txt", DefaultFeeds);
+                lines = DefaultFeeds;
             }
             catch (Exception e)
             {
@@ -48,6 +59,13 @@ namespace EasyNews.ViewModels
             }
 
             Feeds = feeds;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

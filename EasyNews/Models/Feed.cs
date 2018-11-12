@@ -1,21 +1,20 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace EasyNews.Models
 {
     public class Feed : INotifyPropertyChanged
     {
-        private string title;
-        private string link;
+        private string _title;
+        private string _link;
 
         public string Link
         {
-            get { return link;}
+            get { return _link;}
             set
             {
-                if (link != value)
+                if (_link != value)
                 {
-                    link = value;
+                    _link = value;
                     RaisePropertyChanged("Link");
                 }
             }
@@ -23,12 +22,12 @@ namespace EasyNews.Models
 
         public string Title
         {
-            get { return title; }
+            get { return _title; }
             set
             {
-                if (title != value)
+                if (_title != value)
                 {
-                    title = value;
+                    _title = value;
                     RaisePropertyChanged("Title");
                 }
             }
@@ -36,8 +35,8 @@ namespace EasyNews.Models
 
         public Feed(string link, string title="")
         {
-            this.title = title;
-            this.link = link;
+            _title = title;
+            _link = link;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

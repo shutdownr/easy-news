@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace EasyNews.Helpers
