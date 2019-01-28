@@ -2,46 +2,63 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using CodeHollow.FeedReader;
 using Feed = CodeHollow.FeedReader.Feed;
-using EasyNewsFeed = EasyNews.Models.Feed;
 
 namespace EasyNews.Helpers
 {
+    /// <summary>
+    /// A manager used to communicate with the RSS-Feeds, which is also responsible for some handling of the feeds.
+    /// The downloading and parsing of the feeds is done by FeedReader, an external library used only for that purpose.
+    /// </summary>
     class RssManager
     {
+        /// <summary>
+        /// Lazy singleton instance
+        /// </summary>
         private static readonly Lazy<RssManager> LazyRssManager = new Lazy<RssManager>(() => new RssManager());
 
+        /// <summary>
+        /// Instance that is accessed by other classes
+        /// </summary>
         public static RssManager Instance { get { return LazyRssManager.Value; } }
 
+        /// <summary>
+        /// Empty constructor
+        /// </summary>
         private RssManager()
         {
 
         }
 
-
-        public  Task<List<Feed>> GetFeedsAsync(params EasyNewsFeed[] feeds)
+        /// <summary>
+        /// Returns a list of feeds downloaded by the FeedReader.
+        /// Shows an error if the internet connection isn't working.
+        /// </summary>
+        /// <param name="urls">URLs to be downloaded</param>
+        /// <returns>The list of downloaded feeds</returns>
+        public Task<List<Feed>> GetFeeds(params string[] urls)
         {
-            Trace.WriteLine("GetFeedsAsync Started");
             var results = new List<Feed>();
-            foreach (var feed in feeds)
+
+            foreach (var url in urls)
             {
-                Trace.WriteLine("STARTING TO PARSE " + feed.Title);
-                var feedTask = FeedReader.ReadAsync(feed.Link);
-
-                var f = feedTask.Result;
-                f.Link = feed.Link;
-
-                Trace.WriteLine("FINISHED PARSING " + feed.Title);
+                var feedTask = FeedReader.ReadAsync(url);
+                Feed f = feedTask.Result;
+                f.Link = url;
+                
                 results.Add(f);
             }
 
-            Trace.WriteLine("GetFeedsAsync Finished");
             return Task.Run(() => results);
         }
 
+        /// <summary>
+        /// Strips html tags from a string, converts HTML-entities to symbols
+        /// </summary>
+        /// <param name="s">String to be formatted</param>
+        /// <returns>The formatted string</returns>
         public string StripHtml(string s)
         {
             // Remove HTML-tags
@@ -55,6 +72,11 @@ namespace EasyNews.Helpers
             return output;
         }
 
+        /// <summary>
+        /// Checks if a string is a valid url to an RSS-Feed
+        /// </summary>
+        /// <param name="url">The string to be checked</param>
+        /// <returns>A bool, that indicates whether the url is valid or not</returns>
         public Task<bool> IsValidRssFeed(string url)
         {
             if (url == null)
@@ -64,7 +86,7 @@ namespace EasyNews.Helpers
 
             try
             {
-                var uri = new Uri(url);
+                var _ = new Uri(url);   
             }
             catch (Exception e)
             {
@@ -84,7 +106,6 @@ namespace EasyNews.Helpers
                     return false;
                 }
 
-                Trace.WriteLine(Thread.CurrentThread.ManagedThreadId + " Async Task");
                 if (feed.Items.Count > 0)
                 {
                     return true;
@@ -93,6 +114,12 @@ namespace EasyNews.Helpers
             });
         }
 
+        /// <summary>
+        /// Extracts the url of the image from a FeedItem, that is returned from the FeedReader.
+        /// The url is parsed from different locations, since most RSS-Feeds use different ways to encapsulate their image-URLs.
+        /// </summary>
+        /// <param name="item">The item, for which the url is needed</param>
+        /// <returns>The url of the image, or a link to an "Image-not-found" image, if the feed has no images, or an image could not be found</returns>
         public string GetImageUrl(FeedItem item)
         {
             var desc = item.Description;
@@ -113,9 +140,8 @@ namespace EasyNews.Helpers
             {
                 return match.Groups[1].ToString();
             }
-            
 
-            return "http://img05.deviantart.net/b8d4/i/2014/327/a/8/warframe_new_logo_look__vector__by_tasquick-d87fzxg.png";
+            return @"..\Images\NoImage.png";
         }
     }
 }

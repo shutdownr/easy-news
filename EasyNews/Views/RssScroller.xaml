@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:util="clr-namespace:EasyNews.Utility"
     d:DesignHeight="450"
     d:DesignWidth="800"
     FontFamily="{DynamicResource MaterialDesignFont}"
@@ -15,7 +16,7 @@
     TextOptions.TextRenderingMode="Auto"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
+        <util:BoolToVisibilityConverter x:Key="VisibilityConverter" />
     </UserControl.Resources>
     <Grid
         HorizontalAlignment="Stretch"
@@ -29,27 +30,29 @@
             MouseEnter="OnArticleListHover"
             MouseLeave="OnArticleListHoverOut"
             VerticalScrollBarVisibility="Hidden"
-            Visibility="{Binding Path=IsVisible, Converter={StaticResource VisibilityConverter}}">
+            Visibility="{Binding Path=HasFeedItems, Converter={StaticResource VisibilityConverter}, ConverterParameter=Normal}">
 
             <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
 
                 <ItemsControl
                     Name="ArticleList"
                     Width="200"
-                    ItemsSource="{Binding Path=Articles}"
+                    ItemsSource="{Binding Path=FeedItems}"
                     Loaded="OnArticleListLoaded">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
+                            <!--  ReSharper Disable All, Bindings are not found  -->
                             <materialDesign:Card
                                 Margin="14"
                                 Padding="32"
+                                Cursor="Hand"
                                 PreviewMouseDown="OnArticleSelected"
-                                Tag="{Binding Path=FeedItem.Link}">
+                                Tag="{Binding Path=Link}">
                                 <StackPanel
                                     Height="70"
                                     Orientation="Horizontal"
                                     PreviewMouseDown="OnArticleSelected"
-                                    Tag="{Binding Path=FeedItem.Link}">
+                                    Tag="{Binding Path=Link}">
                                     <Image Width="100" Source="{Binding Path=ImageLink}" />
                                     <Grid Height="70">
                                         <TextBlock
@@ -61,11 +64,12 @@
                                             FontWeight="Bold"
                                             PreviewMouseDown="OnArticleSelected"
                                             Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                                            Tag="{Binding Path=FeedItem.Link}"
-                                            Text="{Binding Path=FeedItem.Title, Mode=OneWay}"
+                                            Tag="{Binding Path=Link}"
+                                            Text="{Binding Path=Title, Mode=OneWay}"
                                             TextTrimming="WordEllipsis"
                                             TextWrapping="Wrap" />
                                     </Grid>
+                                    <!--  ReSharper Restore All  -->
                                 </StackPanel>
                             </materialDesign:Card>
                         </DataTemplate>

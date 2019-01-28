@@ -5,14 +5,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:wpf="clr-namespace:Microsoft.Toolkit.Win32.UI.Controls.WPF;assembly=Microsoft.Toolkit.Win32.UI.Controls"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
+    d:DesignHeight="1080"
+    d:DesignWidth="1920"
     mc:Ignorable="d">
+    <!--
+        Shows the WebView used to display articles
+    -->
     <Grid Name="WebViewGrid">
         <wpf:WebView
             Name="WebView"
-            Grid.Column="0"
             Loaded="OnWebViewLoaded"
-            Source="{Binding Path=Link}" />
+            Source="{Binding Path=CurrentLink}" />
     </Grid>
 </UserControl>

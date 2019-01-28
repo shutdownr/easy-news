@@ -5,10 +5,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:utility="clr-namespace:EasyNews.Utility"
+    xmlns:viewModels="clr-namespace:EasyNews.ViewModels"
     xmlns:views="clr-namespace:EasyNews.Views"
     Title="EasyNews"
-    Width="800"
-    Height="450"
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource MaterialDesignFont}"
     TextElement.FontSize="13"
@@ -16,14 +16,58 @@
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
     TextOptions.TextFormattingMode="Ideal"
     TextOptions.TextRenderingMode="Auto"
-    WindowStartupLocation="CenterScreen"
-    WindowState="Maximized"
     mc:Ignorable="d">
-    <DockPanel>
+    <!--
+        MainWindow of the application.
+        This View contains the MenuBar as well as the main content which is displayed via ContentControl.
+    -->
+    <Window.Resources>
+        <!--
+            These DataTemplates decide which view should be displayed depending on the currently active ViewModel
+        -->
+        <DataTemplate DataType="{x:Type viewModels:HomeViewModel}">
+            <views:HomeView />
+        </DataTemplate>
 
-        <Menu Background="{DynamicResource PrimaryHueDarkBrush}" DockPanel.Dock="Top">
+        <DataTemplate DataType="{x:Type viewModels:AddFeedViewModel}">
+            <views:AddFeedView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:RemoveFeedViewModel}">
+            <views:RemoveFeedView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:CurrentArticleViewModel}">
+            <views:ArticleView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:FavoriteViewModel}">
+            <views:FavoriteView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+
+        <utility:BoolToVisibilityConverter x:Key="VisibilityConverter" />
+    </Window.Resources>
+    <DockPanel>
+        <!--
+            The main menu bar and all of it's interaction logic.
+        -->
+        <Menu
+            Name="Menu"
+            Background="{DynamicResource PrimaryHueDarkBrush}"
+            DockPanel.Dock="Top">
+            <Menu.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel HorizontalAlignment="Stretch" />
+                </ItemsPanelTemplate>
+            </Menu.ItemsPanel>
+
             <MenuItem
                 Click="OnHomeClicked"
+                Cursor="Hand"
                 Foreground="White"
                 Header="Home">
                 <MenuItem.Icon>
@@ -31,47 +75,72 @@
                 </MenuItem.Icon>
             </MenuItem>
 
-            <MenuItem Foreground="White" Header="RSS">
+            <MenuItem
+                Cursor="Hand"
+                Foreground="White"
+                Header="RSS">
                 <MenuItem.Icon>
                     <materialDesign:PackIcon Foreground="White" Kind="Rss" />
                 </MenuItem.Icon>
+
                 <MenuItem
                     Click="OnAddFeedClicked"
+                    Cursor="Hand"
                     Foreground="White"
                     Header="Add Feed" />
                 <MenuItem
                     Click="OnRemoveFeedClicked"
+                    Cursor="Hand"
                     Foreground="White"
                     Header="Remove Feed" />
+            </MenuItem>
 
+            <MenuItem
+                Click="OnFavoritesClicked"
+                Cursor="Hand"
+                Foreground="White"
+                Header="Favorites">
+                <MenuItem.Icon>
+                    <materialDesign:PackIcon Foreground="White" Kind="Heart" />
+                </MenuItem.Icon>
+            </MenuItem>
+
+            <MenuItem
+                Click="OnSettingsClicked"
+                Cursor="Hand"
+                Foreground="White"
+                Header="Settings">
+                <MenuItem.Icon>
+                    <materialDesign:PackIcon Foreground="White" Kind="Settings" />
+                </MenuItem.Icon>
+            </MenuItem>
+
+            <MenuItem
+                HorizontalAlignment="Right"
+                Click="OnFavorized"
+                Cursor="Hand"
+                FlowDirection="RightToLeft"
+                Foreground="{DynamicResource PrimaryHueDarkBrush}"
+                Visibility="{Binding Path=CanFavorize, Converter={StaticResource VisibilityConverter}}">
+                <MenuItem.Icon>
+                    <!--  ReSharper Disable All, Resource is not recognized  -->
+                    <materialDesign:PackIcon
+                        Width="17"
+                        Height="17"
+                        Foreground="{Binding Path=IsFavorite, Converter={StaticResource ColorConverter}}"
+                        Kind="Heart" />
+                    <!--  ReSharper Restore All  -->
+                </MenuItem.Icon>
             </MenuItem>
         </Menu>
 
-        <Grid Loaded="OnWindowLoaded">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
-            <views:RssScroller
-                x:Name="RssScroller"
-                Grid.Column="0"
-                Visibility="Collapsed" />
-            <views:ArticleWebView
-                x:Name="ArticleWebView"
-                Grid.Column="1"
-                Margin="10,0,0,0"
-                Visibility="Collapsed" />
-            <views:RssEditGrid
-                x:Name="RssEditGrid"
-                Grid.Column="1"
-                Margin="10,0,0,0"
-                Visibility="Collapsed" />
-            <views:HomeView
-                x:Name="HomeView"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Visibility="Visible" />
-
-        </Grid>
+        <!--
+            The main content of the application.
+            Bound to the CurrentViewModel of MainViewModel.
+            Displays different content depending on which ViewModel is CurrentViewModel.
+        -->
+        <ContentControl x:Name="Pages" DockPanel.Dock="Bottom">
+            <ContentPresenter Content="{Binding Path=CurrentViewModel}" DataContext="{Binding Path=CurrentViewModel}" />
+        </ContentControl>
     </DockPanel>
 </Window>

@@ -1,103 +1,121 @@
-using System;
-using System.Diagnostics;
 using System.Windows;
+using EasyNews.Helpers;
+using EasyNews.Utility;
 using EasyNews.ViewModels;
-
-
 
 namespace EasyNews.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
-        /// <summary>   Default constructor. </summary>
-        ///
-        /// <remarks>   Tim, 15.10.2018. </remarks>
+        /// <summary>
+        /// The MainViewModel, that controls navigation and control-flow in the application
+        /// </summary>
+        private MainViewModel _mainViewModel;
 
-        private FeedViewModel feedViewModel = new FeedViewModel();
+        /// <summary>
+        /// The MenuViewModel, that controls the MenuBar.
+        /// </summary>
+        private MenuViewModel _menuViewModel;
 
-        private RssFeedViewModel rssFeedViewModel = new RssFeedViewModel();
-        private ArticleViewModel articleViewModel = new ArticleViewModel();
-        private FavoritesViewModel favoritesViewModel = new FavoritesViewModel();
-
+        /// <summary>
+        /// Constructor
+        /// Sets this window as MainWindw of the application. Used in Settingsmanager for Window position.
+        /// Applies the Theme and sets the initial position of the window.
+        /// Adds a BoolToColorConverter to the Resources.
+        /// Initializes the component and the members.
+        /// </summary>
         public MainWindow()
         {
+            Application.Current.MainWindow = this;
+
+            SettingsManager.Instance.ApplyTheme(SettingsManager.Instance.GetCurrentTheme());
+            SettingsManager.Instance.ApplyLastWindowPlacement();
+
+            var boolToColorConverter = new BoolToColorConverter("SecondaryAccentBrush", "MaterialDesignDarkForeground");
+            boolToColorConverter.ContextElement = this;
+            Resources.Add("ColorConverter", boolToColorConverter);
+
             InitializeComponent();
 
+            _menuViewModel = new MenuViewModel();
+            Menu.DataContext = _menuViewModel;
+
+            _mainViewModel = new MainViewModel();
+            DataContext = _mainViewModel;
+            Pages.DataContext = _mainViewModel;
+
+
+
+            _mainViewModel.ChangeCommand.Execute(new HomeViewModel());
         }
 
-        public void OnWindowLoaded(object sender, RoutedEventArgs args)
+        /// <summary>
+        /// Called, when the heart in the MenuBar is clicked.
+        /// MenuViewModel toggles isFavorite for the current article.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="args">EventArgs</param>
+        public void OnFavorized(object sender, RoutedEventArgs args)
         {
-            HomeView.ArticleSelected = ArticleSelected;
-            HomeView.ArticleViewModel = articleViewModel;
-            HomeView.FavoritesViewModel = favoritesViewModel;
-
-            RssScroller.InitAnimations(CollapseAnimation_Completed, CollapseAnimation_Started);
-            RssScroller.ArticleSelected = ArticleSelected;
-            RssScroller.FeedViewModel = feedViewModel;
-            RssScroller.RssFeedViewModel = rssFeedViewModel;
-            RssScroller.ArticleViewModel = articleViewModel;
-
-            ArticleWebView.ArticleViewModel = articleViewModel;
-
-            RssEditGrid.RssScroller = RssScroller;
-            RssEditGrid.RssFeedViewModel = rssFeedViewModel;
-            RssEditGrid.FeedViewModel = feedViewModel;
+            _menuViewModel.ToggleFavorite();
         }
 
-        private void CollapseAnimation_Completed(object sender, EventArgs e)
+        /// <summary>
+        /// Called when the MenuButton "Add Feed" is clicked.
+        /// Passes an AddFeedViewModel to the MainViewModel, which will in the end navigate to the corresponding View.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="e">EventArgs</param>
+        private void OnAddFeedClicked(object sender, RoutedEventArgs e)
         {
-            Trace.WriteLine("Unfixing Width...");
-            ArticleWebView.UnfixWidth();
+            _mainViewModel.ChangeCommand.Execute(new AddFeedViewModel());
         }
 
-        private void CollapseAnimation_Started(object sender, EventArgs e)
+        /// <summary>
+        /// Called when the MenuButton "Remove Feed" is clicked.
+        /// Passes a RemoveFeedViewModel to the MainViewModel, which will in the end navigate to the corresponding View.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="e">EventArgs</param>
+        private void OnRemoveFeedClicked(object sender, RoutedEventArgs e)
         {
-            Trace.WriteLine("Fixing Width...");
-            ArticleWebView.FixWidth();
+            _mainViewModel.ChangeCommand.Execute(new RemoveFeedViewModel());
         }
 
-        private void ArticleSelected(string link)
+        /// <summary>
+        /// Called when the MenuButton "Home" is clicked.
+        /// Passes a HomeViewModel to the MainViewModel, which will in the end navigate to the corresponding View.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="e">EventArgs</param>
+        private void OnHomeClicked(object sender, RoutedEventArgs e)
         {
-            ArticleWebView.Navigate(new Uri(link));
-            ArticleWebView.Visibility = Visibility.Visible;
-            RssEditGrid.Visibility = Visibility.Collapsed;
-            RssScroller.Visibility = Visibility.Visible;
-            HomeView.Visibility = Visibility.Collapsed;
+            _mainViewModel.ChangeCommand.Execute(new HomeViewModel());
         }
 
-        private void OnHomeClicked(object sender, RoutedEventArgs args)
+        /// <summary>
+        /// Called when the MenuButton "Favorites" is clicked.
+        /// Passes a FavoritesViewModel to the MainViewModel, which will in the end navigate to the corresponding View.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="e">EventArgs</param>
+        private void OnFavoritesClicked(object sender, RoutedEventArgs e)
         {
-            RssEditGrid.SetMode(RssEditMode.Add);
-            ArticleWebView.Visibility = Visibility.Collapsed;
-            RssEditGrid.Visibility = Visibility.Collapsed;
-            RssScroller.Visibility = Visibility.Collapsed;
-            HomeView.Visibility = Visibility.Visible;
+            _mainViewModel.ChangeCommand.Execute(new FavoriteViewModel());
         }
 
-        private void OnAddFeedClicked(object sender, RoutedEventArgs args)
+        /// <summary>
+        /// Called when the MenuButton "Settings" is clicked.
+        /// Passes a SettingsViewModel to the MainViewModel, which will in the end navigate to the corresponding View.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="e">EventArgs</param>
+        private void OnSettingsClicked(object sender, RoutedEventArgs e)
         {
-            RssEditGrid.SetMode(RssEditMode.Add);
-            ArticleWebView.Visibility = Visibility.Collapsed;
-            RssEditGrid.Visibility = Visibility.Visible;
-            RssScroller.Visibility = Visibility.Visible;
-            HomeView.Visibility = Visibility.Collapsed;
-        }
-
-        private void OnRemoveFeedClicked(object sender, RoutedEventArgs args)
-        {
-            RssEditGrid.SetMode(RssEditMode.Remove);
-            ArticleWebView.Visibility = Visibility.Collapsed;
-            RssEditGrid.Visibility = Visibility.Visible;
-            RssScroller.Visibility = Visibility.Visible;
-            HomeView.Visibility = Visibility.Collapsed;
-        }
-
-        private void HomeView_Loaded()
-        {
-
+            _mainViewModel.ChangeCommand.Execute(new SettingsViewModel());
         }
     }
 

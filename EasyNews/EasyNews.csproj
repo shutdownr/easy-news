@@ -34,6 +34,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Images\EasyNews-Logo.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CodeHollow.FeedReader, Version=1.1.5.0, Culture=neutral, PublicKeyToken=66d870f2b3d70f48, processorArchitecture=MSIL">
       <HintPath>..\packages\CodeHollow.FeedReader.1.1.5\lib\net452\CodeHollow.FeedReader.dll</HintPath>
@@ -90,6 +93,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -108,28 +112,74 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Helpers\FavoritesManager.cs" />
+    <Compile Include="Helpers\FeedManager.cs" />
+    <Compile Include="Helpers\MediationHelper.cs" />
     <Compile Include="Helpers\RssManager.cs" />
-    <Compile Include="Config\Snippets.cs" />
-    <Compile Include="Validation\RssValidationRule.cs" />
-    <Compile Include="ViewModels\FavoritesViewModel.cs" />
-    <Compile Include="ViewModels\RssEditViewModel.cs" />
+    <Compile Include="Helpers\SettingsManager.cs" />
+    <Compile Include="Helpers\ViewModelHolder.cs" />
+    <Compile Include="Models\Theme.cs" />
+    <Compile Include="Utility\BoolToColorConverter.cs" />
+    <Compile Include="Utility\BoolToVisibilityConverter.cs" />
+    <Compile Include="Utility\RssValidationRule.cs" />
+    <Compile Include="ViewModels\AddFeedViewModel.cs" />
+    <Compile Include="ViewModels\ArticleViewModel.cs" />
+    <Compile Include="ViewModels\BaseViewModel.cs" />
+    <Compile Include="ViewModels\CurrentArticleViewModel.cs" />
+    <Compile Include="ViewModels\FavoriteViewModel.cs" />
+    <Compile Include="ViewModels\HomeViewModel.cs" />
+    <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\MenuViewModel.cs" />
+    <Compile Include="ViewModels\RemoveFeedViewModel.cs" />
+    <Compile Include="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="Views\AddFeedView.xaml.cs">
+      <DependentUpon>AddFeedView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ArticleView.xaml.cs">
+      <DependentUpon>ArticleView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ArticleWebView.xaml.cs">
       <DependentUpon>ArticleWebView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FavoriteView.xaml.cs">
+      <DependentUpon>FavoriteView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\HomeView.xaml.cs">
       <DependentUpon>HomeView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\RssEditGrid.xaml.cs">
-      <DependentUpon>RssEditGrid.xaml</DependentUpon>
+    <Compile Include="Views\LoadingOverlay.xaml.cs">
+      <DependentUpon>LoadingOverlay.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\RemoveFeedView.xaml.cs">
+      <DependentUpon>RemoveFeedView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\RssScroller.xaml.cs">
       <DependentUpon>RssScroller.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\SettingsView.xaml.cs">
+      <DependentUpon>SettingsView.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\AddFeedView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ArticleView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ArticleWebView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\FavoriteView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\HomeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LoadingOverlay.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -142,20 +192,20 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Helpers\ErrorManager.cs" />
-    <Compile Include="Models\Feed.cs" />
     <Compile Include="Models\EasyNewsFeedItem.cs" />
-    <Compile Include="ViewModels\ArticleViewModel.cs" />
-    <Compile Include="ViewModels\FeedViewModel.cs" />
-    <Compile Include="ViewModels\RssFeedViewModel.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Views\RssEditGrid.xaml">
+    <Page Include="Views\RemoveFeedView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\RssScroller.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\SettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -178,6 +228,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="app.config" />
     <None Include="Config\packages.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -190,6 +241,11 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\EasyNews-Logo.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\NoImage.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

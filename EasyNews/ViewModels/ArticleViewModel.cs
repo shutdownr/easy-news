@@ -1,124 +1,138 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using EasyNews.Helpers;
 using EasyNews.Models;
 using Feed = CodeHollow.FeedReader.Feed;
 
 namespace EasyNews.ViewModels
 {
-    public class ArticleViewModel : INotifyPropertyChanged
+    /// <summary>
+    /// ViewModel, that is based off HomeViewModel.
+    /// This ViewModel extends HomeViewModel by Add/Remove-Methods for feeds and feedItems.
+    /// This ViewModel serves as a base for other ViewModels, that are used in Views.
+    /// </summary>
+    class ArticleViewModel : HomeViewModel
     {
-
-        private ObservableCollection<EasyNewsFeedItem> _articles;
-
-        public ObservableCollection<EasyNewsFeedItem> Articles
+        /// <summary>
+        /// Adds a new feed to the list of feeds.
+        /// The feed is downloaded and the articles are added to the list of articles as well.
+        /// </summary>
+        /// <param name="url">The url of the feed to be added</param>
+        public async void AddFeed(string url)
         {
-            get { return _articles; }
-            set
+            var favorites = FavoritesManager.Instance.GetFavorites();
+
+            var result = await RssManager.Instance.GetFeeds(url);
+            var feed = result.First();
+            RssFeeds.Add(feed);
+
+            List<EasyNewsFeedItem> easyFeedItems = new List<EasyNewsFeedItem>();
+
+            foreach (var feedItem in feed.Items)
             {
-                _articles = value;
-                IsVisible = value.Count > 0;
-                OnPropertyChanged();
+                var isFav = favorites.Contains(feedItem);
+                var easyFeedItem = new EasyNewsFeedItem(feedItem, isFav);
+                // Parse Image URL
+                easyFeedItem.ImageLink = RssManager.Instance.GetImageUrl(feedItem);
+                // Strip HTML tags
+                easyFeedItem.Description = RssManager.Instance.StripHtml(feedItem.Description);
+                // Add the item at the correct position;
+                easyFeedItems.Add(easyFeedItem);
             }
+            AddFeedItems(easyFeedItems);
         }
 
-        private string _link;
-
-        public string Link
+        /// <summary>
+        /// Adds feedItems to the list of feedItems.
+        /// All feedItems are inserted at the correct date (since the list is sorted by date)
+        /// </summary>
+        /// <param name="feedItems">List of feedItems to be added</param>
+        private void AddFeedItems(List<EasyNewsFeedItem> feedItems)
         {
-            get
-            {
-                return _link;
-            }
-            set
-            {
-                _link = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _isVisible;
-
-        public bool IsVisible
-        {
-            get
-            {
-                return _isVisible;
-            }
-            set
-            {
-                _isVisible = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        public ArticleViewModel()
-        {
-            _link = "https://www.sueddeutsche.de/";
-            Articles = new ObservableCollection<EasyNewsFeedItem>();
-        }
-
-        // Adds articles from one feed to the collection, without resetting it
-        public void AddArticlesForFeed(Feed feed)
-        {
-            if (Articles.Count == 0)
-            {
-                IsVisible = true;
-            }
             var counter = 0;
-            foreach (var article in feed.Items)
-            {
-                EasyNewsFeedItem item = new EasyNewsFeedItem(article);
 
+            foreach (var article in feedItems)
+            {
                 // New Article is older than the oldest article in the list, append article to end
-                if (counter >= Articles.Count)
+                if (counter >= FeedItems.Count)
                 {
-                    Articles.Add(item);
+                    FeedItems.Add(article);
                 }
                 // Insert new Article somewhere in the middle of the array, we don't know where it is
                 else
                 {
                     // Iterate through Articles until we found the right date to insert our new article
-                    while (counter < Articles.Count &&
-                           Articles[counter].FeedItem.PublishingDate > article.PublishingDate)
+                    while (counter < FeedItems.Count &&
+                           FeedItems[counter].PublishingDate > article.PublishingDate)
                     {
                         counter++;
                     }
                     // All articles we searched were newer than our article => Append the article
-                    if (counter == Articles.Count)
+                    if (counter == FeedItems.Count)
                     {
-                        Articles.Add(item);
+                        FeedItems.Add(article);
                     }
                     else
                     {
                         // Found the right date, insert the article, redo with the next one
-                        Articles.Insert(counter, item);
+                        FeedItems.Insert(counter, article);
                     }
                 }
             }
+            // ReSharper Disable All
+            OnPropertyChanged("HasFeedItems");
+            // ReSharper Restore All
         }
 
-        public void RemoveArticlesForFeed(Feed feed)
+        /// <summary>
+        /// Removes a feed from the list of feeds.
+        /// After that the articles from that feed are also removed from the list of articles.
+        /// </summary>
+        /// <param name="url">URL of the feed to be removed</param>
+        public void RemoveFeed(string url)
+        {
+            Feed feedToBeRemoved = null;
+            for (var i = 0; i < RssFeeds.Count; i++)
+            {
+                if (RssFeeds[i].Link == url)
+                {
+                    feedToBeRemoved = RssFeeds[i];
+                    RssFeeds.Remove(feedToBeRemoved);
+                }
+            }
+
+            if (feedToBeRemoved == null)
+            {
+                return;
+            }
+
+            RemoveFeedItems(feedToBeRemoved);
+
+        }
+
+
+        /// <summary>
+        /// Removes feedItems for a given feed from the list of feedItems.
+        /// </summary>
+        /// <param name="feed">The feed for which the articles should be removed</param>
+        private void RemoveFeedItems(Feed feed)
         {
             var counter = 0;
 
             foreach (var article in feed.Items)
             {
-                while (counter < Articles.Count && Articles[counter].FeedItem != article)
+                while (counter < FeedItems.Count && FeedItems[counter].Link != article.Link)
                 {
                     counter++;
                 }
 
-                if (counter == Articles.Count)
+                if (counter == FeedItems.Count)
                 {
                     break;
                 }
                 else
                 {
-                    Articles.RemoveAt(counter);
+                    FeedItems.RemoveAt(counter);
                     if (counter > 0)
                     {
                         counter--;
@@ -126,34 +140,9 @@ namespace EasyNews.ViewModels
                 }
             }
 
-            if (Articles.Count == 0)
-            {
-                IsVisible = false;
-            }
-        }
-
-
-        public void GetArticlesForFeed(params Feed[] feeds)
-        {
-            var articlesList = new List<EasyNewsFeedItem>();
-            foreach (var feed in feeds)
-            {
-                foreach (var article in feed.Items)
-                {
-                    EasyNewsFeedItem item = new EasyNewsFeedItem(article);
-                    articlesList.Add(item);
-                }
-            }
-
-            var articleListSorted = articlesList.OrderByDescending((article1) => { return article1.FeedItem.PublishingDate; }).ToList();
-            Articles = new ObservableCollection<EasyNewsFeedItem>(articleListSorted);
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            // ReSharper Disable All
+            OnPropertyChanged("HasFeedItems");
+            // ReSharper Restore All
         }
     }
 }

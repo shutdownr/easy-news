@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using EasyNews.Models;
 using EasyNews.ViewModels;
@@ -12,34 +9,60 @@ namespace EasyNews.Views
     /// <summary>
     /// Interaction logic for RssScroller.xaml
     /// </summary>
-    public partial class RssScroller : UserControl
+    public partial class RssScroller
     {
-
-        public FeedViewModel FeedViewModel;
-
-        public RssFeedViewModel RssFeedViewModel;
-        public ArticleViewModel ArticleViewModel;
-
+        /// <summary>
+        /// The expandAnimation used by the Scroller
+        /// </summary>
         private DoubleAnimation _expandAnimation;
+
+        /// <summary>
+        /// The collapseAnimation used by the Scroller
+        /// </summary>
         private DoubleAnimation _collapseAnimation;
+
+        /// <summary>
+        /// The Storyboard for the expandAnimation
+        /// </summary>
         private Storyboard _expandArticleListStoryboard;
+
+        /// <summary>
+        /// The Storyboard for the collapseAnimation
+        /// </summary>
         private Storyboard _collapseArticleListStoryboard;
+
+        /// <summary>
+        /// The EventHandler, that is called when the collapseAnimation starts
+        /// </summary>
         private EventHandler _collapseAnimationStarted;
 
-        public Action<string> ArticleSelected { private get; set; }
+        /// <summary>
+        /// Action, that is executed when an Article is selected. Parent class sets this variable.
+        /// </summary>
+        public Action<EasyNewsFeedItem> ArticleSelected { private get; set; }
 
+        /// <summary>
+        /// Constructor
+        /// Initializes the animations
+        /// </summary>
         public RssScroller()
         {
             InitializeComponent();
-        }
-
-        public void InitAnimations(EventHandler completed, EventHandler started)
-        {
-            _collapseAnimationStarted = started;
 
             var halfSecondDuration = new Duration(TimeSpan.FromMilliseconds(500));
             _expandAnimation = new DoubleAnimation(200, 400, halfSecondDuration);
             _collapseAnimation = new DoubleAnimation(400, 200, halfSecondDuration);
+        }
+
+        /// <summary>
+        /// Sets the event handlers for started/completed of the animations
+        /// Also initializes the animations and connects them with their Storyboards
+        /// </summary>
+        /// <param name="completed">The EventHandler to be called when the animations are completed</param>
+        /// <param name="started">The EventHandler to be called when the animations are started</param>
+        public void InitAnimations(EventHandler completed, EventHandler started)
+        {
+            _collapseAnimationStarted = started;
 
             _collapseAnimation.Completed += completed;
             _expandAnimation.Completed += completed;
@@ -55,56 +78,59 @@ namespace EasyNews.Views
             Storyboard.SetTargetProperty(_collapseAnimation, new PropertyPath(WidthProperty));
         }
 
+        /// <summary>
+        /// Called when ArticleList is loaded.
+        /// Sets the DataContext of the ScrollViewer.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="args">EventArgs</param>
         private void OnArticleListLoaded(object sender, RoutedEventArgs args)
         {
-            ScrollViewer.DataContext = ArticleViewModel;
-            ReloadFeeds();
+            var context = DataContext as ArticleViewModel;
+            ScrollViewer.DataContext = context;
         }
 
-        public async void ReloadFeeds()
-        {
-            if (FeedViewModel != null && RssFeedViewModel != null && ArticleViewModel != null)
-            {
-                FeedViewModel.InitFeeds();
-                await RssFeedViewModel.GetFeedData(FeedViewModel.Feeds);
-                ArticleViewModel.GetArticlesForFeed(RssFeedViewModel.Feeds.ToArray());
-            }
-            
-        }
-
-        public async void AddFeed(Feed feed)
-        {
-            await RssFeedViewModel.AddFeedData(feed);
-            // We just added a new feed, this one is certainly the last one
-            ArticleViewModel.AddArticlesForFeed(RssFeedViewModel.Feeds.Last());
-        }
-
-        public void RemoveFeed(CodeHollow.FeedReader.Feed feed)
-        {
-            // Remove the feed from the RssFeedViewModel
-            RssFeedViewModel.RemoveFeedData(feed);
-            // Also remove from ArticleViewModel, to update the View
-            ArticleViewModel.RemoveArticlesForFeed(feed);
-        }
-
-
+        /// <summary>
+        /// Called when an article is selected. Calls the EventHandler ArticleSelected with the selected FeedItem
+        /// </summary>
+        /// <param name="sender">EventSender (the Button that was clicked)</param>
+        /// <param name="args">EventArgs</param>
         private void OnArticleSelected(object sender, RoutedEventArgs args)
         {
             var b = (FrameworkElement)sender;
-            var link = (string)b.Tag;
-            ArticleSelected(link);
+            var item = (EasyNewsFeedItem) b.DataContext;
+            
+            ArticleSelected(item);
         }
 
+        /// <summary>
+        /// Called when the user hovers over the Scroller.
+        /// Starts the expandAnimation.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="args">EventArgs</param>
         private void OnArticleListHover(object sender, RoutedEventArgs args)
         {
-            Trace.WriteLine("HoverIn");
+            if (_collapseAnimationStarted == null)
+            {
+                return;
+            }
             _collapseAnimationStarted(sender,args);
             _expandArticleListStoryboard.Begin(this);
         }
 
+        /// <summary>
+        /// Called when the user hovers out of the Scroller.
+        /// Starts the collapseAnimation.
+        /// </summary>
+        /// <param name="sender">EventSender</param>
+        /// <param name="args">EventArgs</param>
         private void OnArticleListHoverOut(object sender, RoutedEventArgs args)
         {
-            Trace.WriteLine("HoverOut");
+            if (_collapseAnimationStarted == null)
+            {
+                return;
+            }
             _collapseAnimationStarted(sender,args);
             _collapseArticleListStoryboard.Begin(this);
         }

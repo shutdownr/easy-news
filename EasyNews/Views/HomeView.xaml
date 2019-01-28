@@ -3,19 +3,46 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:EasyNews.Views"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
+    xmlns:util="clr-namespace:EasyNews.Utility"
+    xmlns:views="clr-namespace:EasyNews.Views"
+    d:DesignHeight="1080"
+    d:DesignWidth="1920"
     mc:Ignorable="d">
+    <!--
+        Shows the starting screen of the application.
+        Always shows a Loading Overlay until the RSS-download is done.
+        If no feeds are added or no articles are found, a message redirecting to AddFeedView is shown.
+        Otherwise articles from the added feeds are shown in a grid sorted by date.
+    -->
+    <UserControl.Resources>
+        <util:BoolToVisibilityConverter x:Key="VisibilityConverter" />
+        <Style x:Key="NoMouseOverButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="Transparent" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
     <Grid
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="{DynamicResource MaterialDesignPaper}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="1000" />
+            <ColumnDefinition Width="4*" />
             <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
         <ScrollViewer
@@ -23,81 +50,131 @@
             Grid.Column="1"
             Background="{DynamicResource MaterialDesignLightBackground}"
             HorizontalScrollBarVisibility="Disabled"
+            PreviewMouseWheel="OnScrolled"
             VerticalScrollBarVisibility="Hidden">
-
-            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                <TextBlock
-                    Margin="40"
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Grid.Column="0"
+                    Width="{x:Static SystemParameters.VerticalScrollBarWidth}"
+                    Background="{DynamicResource MaterialDesignPaper}" />
+                <StackPanel
+                    Grid.Column="1"
                     HorizontalAlignment="Center"
-                    Style="{DynamicResource MaterialDesignDisplay4TextBlock}">
-                    EasyNews
-                </TextBlock>
-                <ItemsControl
-                    Name="ArticleList"
-                    Width="1000"
-                    ItemsSource="{Binding Path=Articles}"
-                    Loaded="OnArticleListLoaded">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="2" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <materialDesign:Card Margin="14" Padding="32">
-                                <StackPanel Height="150" Orientation="Vertical">
-                                    <StackPanel Height="70" Orientation="Horizontal">
-                                        <Image Width="100" Source="{Binding Path=ImageLink}" />
+                    VerticalAlignment="Top">
+                    <TextBlock
+                        Margin="40"
+                        HorizontalAlignment="Center"
+                        Style="{DynamicResource MaterialDesignDisplay4TextBlock}">
+                        EasyNews
+                    </TextBlock>
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Style="{DynamicResource MaterialDesignDisplay1TextBlock}"
+                        TextAlignment="Center"
+                        Visibility="{Binding Path=HasFeedItems, Converter={StaticResource VisibilityConverter}, ConverterParameter=Inverted}">
+                        You didn't add any Feeds yet.<LineBreak />
+                        Try adding some new Feeds
+                        <Button
+                            Height="32"
+                            Margin="0,0,0,0"
+                            Padding="0,0,0,0"
+                            Click="OnAddFeedClicked"
+                            Cursor="Hand"
+                            FontSize="32"
+                            Foreground="{DynamicResource PrimaryHueDarkBrush}"
+                            Style="{StaticResource NoMouseOverButton}">
+                            here!
+                        </Button>
+                    </TextBlock>
+                    <views:LoadingOverlay
+                        Height="250"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding Path=IsLoadingFeeds, Converter={StaticResource VisibilityConverter}}" />
+                    <ItemsControl
+                        Name="ArticleList"
+                        ItemsSource="{Binding Path=FeedItems}"
+                        Loaded="OnArticleListLoaded">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="{Binding Path=ColumnCount}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <materialDesign:Card Margin="14" Padding="32">
+                                    <StackPanel Height="150" Orientation="Vertical">
+                                        <StackPanel Height="70" Orientation="Horizontal">
+                                            <!--  ReSharper Disable All, Bindings are not found  -->
+                                            <Image
+                                                Width="100"
+                                                Cursor="Hand"
+                                                PreviewMouseDown="OnArticleSelected"
+                                                Source="{Binding Path=ImageLink}" />
+                                            <TextBlock
+                                                Width="250"
+                                                Margin="20,5,0,5"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Top"
+                                                Cursor="Hand"
+                                                FontSize="15"
+                                                FontWeight="Bold"
+                                                PreviewMouseDown="OnArticleSelected"
+                                                Style="{DynamicResource MaterialDesignTitleTextBlock}"
+                                                Tag="{Binding Path=Link}"
+                                                Text="{Binding Path=Title, Mode=OneWay}"
+                                                TextTrimming="WordEllipsis"
+                                                TextWrapping="Wrap" />
+                                            <Button
+                                                Width="32"
+                                                Padding="0,2,0,2"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                materialDesign:RippleAssist.IsCentered="True"
+                                                PreviewMouseDown="OnFavorized"
+                                                Style="{StaticResource MaterialDesignToolButton}"
+                                                Tag="{Binding Path=Link}">
+                                                <materialDesign:PackIcon
+                                                    Width="28"
+                                                    Height="28"
+                                                    Foreground="{Binding Path=IsFavorite, Converter={StaticResource ColorConverter}}"
+                                                    Kind="Heart" />
+                                            </Button>
+
+                                        </StackPanel>
                                         <TextBlock
-                                            Width="250"
-                                            Margin="20,5,0,5"
+                                            Width="400"
+                                            Height="60"
+                                            Margin="0,20,0,0"
                                             HorizontalAlignment="Left"
                                             VerticalAlignment="Top"
+                                            Cursor="Hand"
                                             FontSize="15"
-                                            FontWeight="Bold"
                                             PreviewMouseDown="OnArticleSelected"
                                             Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                                            Tag="{Binding Path=FeedItem.Link}"
-                                            Text="{Binding Path=FeedItem.Title, Mode=OneWay}"
+                                            Tag="{Binding Path=Link}"
+                                            Text="{Binding Path=Description, Mode=OneWay}"
+                                            TextAlignment="Justify"
                                             TextTrimming="WordEllipsis"
                                             TextWrapping="Wrap" />
-                                        <Button
-                                            Width="32"
-                                            Padding="0,2,0,2"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            materialDesign:RippleAssist.IsCentered="True"
-                                            PreviewMouseDown="OnFavorized"
-                                            Style="{StaticResource MaterialDesignToolButton}"
-                                            Tag="{Binding Path=FeedItem.Link}">
-                                            <materialDesign:PackIcon
-                                                Width="28"
-                                                Height="28"
-                                                Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                                Kind="Heart" />
-                                        </Button>
-
+                                        <!--  ReSharper Restore All  -->
                                     </StackPanel>
-                                    <TextBlock
-                                        Width="400"
-                                        Height="60"
-                                        Margin="0,20,0,0"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Top"
-                                        FontSize="15"
-                                        PreviewMouseDown="OnArticleSelected"
-                                        Style="{DynamicResource MaterialDesignTitleTextBlock}"
-                                        Tag="{Binding Path=FeedItem.Link}"
-                                        Text="{Binding Path=FeedItem.Description, Mode=OneWay}"
-                                        TextAlignment="Justify"
-                                        TextTrimming="WordEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </materialDesign:Card>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+                                </materialDesign:Card>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <Border
+                    Name="ScrollbarPlaceholder"
+                    Grid.Column="2"
+                    Width="{x:Static SystemParameters.VerticalScrollBarWidth}"
+                    Background="{DynamicResource MaterialDesignPaper}" />
+            </Grid>
+
         </ScrollViewer>
     </Grid>
 </UserControl>

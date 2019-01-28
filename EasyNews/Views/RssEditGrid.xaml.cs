@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using EasyNews.Helpers;
 using EasyNews.Models;
 using EasyNews.Validation;
 using EasyNews.ViewModels;
@@ -16,47 +17,17 @@ namespace EasyNews.Views
     /// Interaction logic for RssEditGrid.xaml
     /// </summary>
     public partial class RssEditGrid : UserControl
-    {
+    {/*
         private RssEditViewModel _rssEditViewModel;
-
-        public RssFeedViewModel RssFeedViewModel {
-            get
-            {
-                return _rssFeedViewModel;
-            }
-            set
-            {
-                _rssFeedViewModel = value;
-                FeedComboBox.DataContext = _rssFeedViewModel;
-            }
-        }
-
-        private RssFeedViewModel _rssFeedViewModel;
-
-        public FeedViewModel FeedViewModel
-        {
-            get
-            {
-                return _feedViewModel;
-            }
-            set
-            {
-                _feedViewModel = value;
-            }
-        }
-
-        private FeedViewModel _feedViewModel;
-
-        public RssScroller RssScroller { private get; set; }
 
         public RssEditGrid()
         {
             InitializeComponent();
         }
-
+        
         public void SetMode(RssEditMode mode)
         {
-            _rssEditViewModel = new RssEditViewModel(mode);
+            _rssEditViewModelOld = new RssEditViewModelOLD(mode);
             if (mode == RssEditMode.Add)
             {
                 AddButton.Visibility = Visibility.Visible;
@@ -71,7 +42,7 @@ namespace EasyNews.Views
                 FeedComboBox.Visibility = Visibility.Visible;
                 UrlInputTextBox.Visibility = Visibility.Collapsed;
             }
-            Grid.DataContext = _rssEditViewModel;
+            Grid.DataContext = _rssEditViewModelOld;
         } 
 
         private void OnGridClicked(object sender, RoutedEventArgs args)
@@ -84,9 +55,11 @@ namespace EasyNews.Views
         {
             // Selected text is title of the feed, not the link
             var selectedFeed = FeedComboBox.Text;
+
+            new ArticleViewModel().
             var feed = new CodeHollow.FeedReader.Feed();
             // Search for the matching feed, then forward it do update the ViewModels
-            for (var i = 0; i < _rssFeedViewModel.Feeds.Count; i++)
+            for (var i = 0; i < _rssEditViewModel.Feeds.Count; i++)
             {
                 feed = _rssFeedViewModel.Feeds[i];
                 if (feed.Title == selectedFeed)
@@ -96,18 +69,8 @@ namespace EasyNews.Views
                     i--;
                 }
             }
-            
 
-            
-            
-            if (File.Exists(@".\Feeds.txt"))
-            {
-                var feeds = File.ReadAllLines(@".\Feeds.txt");
-                feeds = feeds.Where( savedFeed => savedFeed != feed.Link).ToArray();
-
-                File.WriteAllLines(@".\Feeds.txt",feeds);
-            }
-
+            FeedManager.Instance.RemoveFeed(feed.Link);
         }
 
         private void OnAddClicked(object sender, EventArgs args)
@@ -122,8 +85,8 @@ namespace EasyNews.Views
             {
                 var feeds = File.ReadAllLines(@".\Feeds.txt");
                 Trace.WriteLine(feeds.Length);
-                Trace.WriteLine(_rssEditViewModel.CurrentUrl + " CurrentURL");
-                if (feeds.Contains(_rssEditViewModel.CurrentUrl))
+                Trace.WriteLine(_rssEditViewModelOld.CurrentUrl + " CurrentURL");
+                if (feeds.Contains(_rssEditViewModelOld.CurrentUrl))
                 {
                     // Create the error
                     ValidationError duplicateError = new ValidationError(new RssValidationRule(), UrlInputTextBox.GetBindingExpression(TextBox.TextProperty))
@@ -142,22 +105,22 @@ namespace EasyNews.Views
                 // File does not exist, create it and write the new feed.
                 if (!File.Exists(@".\Feeds.txt"))
                 {
-                    File.WriteAllText(@".\Feeds.txt", _rssEditViewModel.CurrentUrl + Environment.NewLine);
+                    File.WriteAllText(@".\Feeds.txt", _rssEditViewModelOld.CurrentUrl + Environment.NewLine);
                 }
                 // File exists, append the new feed.
                 else
                 {
-                    File.AppendAllText(@".\Feeds.txt", _rssEditViewModel.CurrentUrl + Environment.NewLine);
+                    File.AppendAllText(@".\Feeds.txt", _rssEditViewModelOld.CurrentUrl + Environment.NewLine);
                 }
 
                 // Reload current feeds
                 if (RssScroller != null)
                 {
                     Trace.WriteLine("Reloading Feeds...");
-                    RssScroller.AddFeed(new Feed(_rssEditViewModel.CurrentUrl));
+                    RssScroller.AddFeed(new Feed(_rssEditViewModelOld.CurrentUrl));
                 }
             }
-        }
+        }*/
 
     }
 }
